@@ -3,26 +3,64 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="description" content="A product of emergent.sh" />
+        <meta name="theme-color" content="#09090b" />
+        <meta
+            name="description"
+            content="AetherGCS is a next-generation web-based Multi-Drone Ground Control Station. Monitor real-time telemetry, command fleets via MAVLink, and design autonomous waypoint flight missions."
+        />
+        <meta
+            name="keywords"
+            content="drone, ground control station, GCS, UAV, multi-drone, MAVLink, telemetry, PX4, ArduPilot, mission planner, autonomous flight, waypoint navigation"
+        />
+        <meta name="author" content="AetherGCS" />
+        <meta name="application-name" content="AetherGCS" />
+        <meta name="robots" content="index, follow" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="AetherGCS" />
+        <meta property="og:title" content="AetherGCS — Multi-Drone Ground Control Station & Mission Planner" />
+        <meta
+            property="og:description"
+            content="Real-time multi-drone fleet monitoring, MAVLink hardware control, and interactive waypoint flight mission planning."
+        />
+        <meta property="og:image" content="%PUBLIC_URL%/favicon.svg" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="AetherGCS — Multi-Drone Ground Control Station" />
+        <meta
+            name="twitter:description"
+            content="Real-time multi-drone fleet monitoring, MAVLink hardware control, and interactive waypoint flight mission planning."
+        />
+        <meta name="twitter:image" content="%PUBLIC_URL%/favicon.svg" />
+
+        <link rel="canonical" href="https://aethergcs.com/" />
+        <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+        <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+
+        <title>AetherGCS — Multi-Drone Ground Control Station & Mission Planner</title>
+
+        <!-- Structured Data (Schema.org) -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "AetherGCS",
+          "applicationCategory": "UtilitiesApplication",
+          "operatingSystem": "Web, Windows, macOS, Linux",
+          "description": "Next-generation web-based Multi-Drone Ground Control Station (GCS). Monitor telemetry, control fleets, and plan autonomous waypoint missions in real-time.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+        </script>
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
-        <!--
-        manifest.json provides metadata used when your web app is installed on a
-        user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-        -->
-        <!--
-        Notice the use of %PUBLIC_URL% in the tags above.
-        It will be replaced with the URL of the `public` folder during the build.
-        Only files inside the `public` folder can be referenced from the HTML.
-
-        Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-        work correctly both with client-side routing and a non-root public URL.
-        Learn how to configure a non-root public URL by running `npm run build`.
-        -->
-        <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
-        <title>AetherGCS</title>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>

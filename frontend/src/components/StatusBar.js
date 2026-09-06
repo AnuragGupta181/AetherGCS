@@ -8,7 +8,7 @@ export default function StatusBar() {
   const low = drones.filter((d) => d.telemetry?.battery_percent != null && d.telemetry.battery_percent < 20 && d.status === "connected");
 
   return (
-    <div
+    <footer
       data-testid="status-bar"
       className="h-8 border-t border-zinc-700 bg-zinc-950 flex items-center px-4 text-xs font-mono text-zinc-300 justify-between"
     >
@@ -38,6 +38,6 @@ export default function StatusBar() {
         <span>{new Date().toISOString().replace("T", " ").slice(0, 19)}Z</span>
         <span className="text-[#FFB000]">AETHER GCS</span>
       </div>
-    </div>
+    </footer>
   );
 }

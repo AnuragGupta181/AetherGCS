@@ -411,7 +411,7 @@ export default function TopToolbar() {
   };
 
   return (
-    <div
+    <header
       data-testid="top-toolbar"
       className="h-14 border-b border-zinc-700 bg-zinc-900 flex items-center gap-2 px-3 z-[9999] relative"
     >
@@ -419,9 +419,9 @@ export default function TopToolbar() {
       <div className="flex items-center gap-2.5 mr-3">
         <AetherLogo className="w-6 h-6 text-[#FFB000] shrink-0" />
         <div className="flex flex-col">
-          <span className="font-display font-black text-sm text-zinc-100 leading-none tracking-wider">
+          <h1 className="font-display font-black text-sm text-zinc-100 leading-none tracking-wider m-0 p-0">
             AETHER GCS
-          </span>
+          </h1>
           <span className="font-mono text-[10px] text-zinc-500 leading-none mt-0.5">
             MULTI-DRONE CTRL
           </span>
@@ -580,6 +580,6 @@ export default function TopToolbar() {
       <AddDroneDialog open={addOpen} onOpenChange={setAddOpen} />
       <MissionLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} />
       <SurveyGridDialog open={surveyOpen} onOpenChange={setSurveyOpen} />
-    </div>
+    </header>
   );
 }

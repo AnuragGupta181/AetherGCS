@@ -1,0 +1,19 @@
+{
+  "short_name": "AetherGCS",
+  "name": "AetherGCS — Multi-Drone Ground Control Station",
+  "description": "A high-performance web-based Ground Control Station for multi-drone fleet monitoring, MAVLink control, and waypoint mission planning.",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "64x64 128x128 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#09090b",
+  "background_color": "#09090b",
+  "orientation": "landscape-primary",
+  "categories": ["utilities", "productivity", "navigation"]
+}

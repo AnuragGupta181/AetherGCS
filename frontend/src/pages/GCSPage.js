@@ -103,7 +103,7 @@ export default function GCSPage() {
         <ResizeHandle direction="vertical" {...leftPanel.handleProps} />
 
         {/* Center Panel (Map + Mission Planner) */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <main aria-label="Flight Map and Mission Control" className="flex-1 flex flex-col overflow-hidden min-w-0">
           <DroneMap />
           
           {/* Resize Handle for Mission Planner */}
@@ -150,7 +150,7 @@ export default function GCSPage() {
               </TabsContent>
             </Tabs>
           </div>
-        </div>
+        </main>
 
         {/* Resize Handle for Right Sidebar */}
         <ResizeHandle direction="vertical" {...rightPanel.handleProps} />
