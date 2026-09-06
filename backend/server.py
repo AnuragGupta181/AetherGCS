@@ -11,7 +11,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -20,9 +20,11 @@ from starlette.middleware.cors import CORSMiddleware
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
+from gcs.camera_manager import CameraManager
 from gcs.command_log import CommandLogStore
 from gcs.db import close_db
 from gcs.drone_manager import DroneManager
+from gcs.lidar_manager import LidarManager
 from gcs.mission_manager import MissionManager
 from gcs.models import (
     CommandLog,
@@ -48,6 +50,8 @@ api = APIRouter(prefix="/api")
 drone_manager = DroneManager()
 mission_manager = MissionManager()
 command_log = CommandLogStore()
+camera_manager = CameraManager()
+lidar_manager = LidarManager()
 
 
 # ---------------------------------------------------------------------------
@@ -118,11 +122,15 @@ async def _startup() -> None:
     drone_manager.subscribe(_on_drone_update)
     await drone_manager.load_saved()
     await broadcaster.start()
+    await camera_manager.start(0)
+    await lidar_manager.start()
     logger.info("GCS started with %d saved drone(s)", len(drone_manager.list_drones()))
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    await camera_manager.stop()
+    await lidar_manager.stop()
     await broadcaster.stop()
     await drone_manager.shutdown()
     await close_db()
@@ -368,6 +376,82 @@ async def ws_telemetry(ws: WebSocket):
         broadcaster.disconnect(ws)
     except Exception:
         broadcaster.disconnect(ws)
+
+
+# ---------------------------------------------------------------------------
+# Camera Feed & LiDAR Vision Endpoints
+# ---------------------------------------------------------------------------
+@api.get("/camera/devices", tags=["Vision"])
+async def get_camera_devices():
+    """List available UVC / USB video devices (including OTG receiver and synthetic feed)."""
+    return camera_manager.list_available_devices()
+
+
+@api.get("/camera/status", tags=["Vision"])
+async def get_camera_status():
+    """Current live video feed status (source, fps, frame count, clients)."""
+    return camera_manager.get_status()
+
+
+@api.post("/camera/start", tags=["Vision"])
+async def start_camera(source: Union[int, str] = 0):
+    """Start video capture on the specified device index or 'synthetic'."""
+    await camera_manager.start(source)
+    return {"ok": True, "status": camera_manager.get_status()}
+
+
+@api.post("/camera/stop", tags=["Vision"])
+async def stop_camera():
+    """Stop live video streaming."""
+    await camera_manager.stop()
+    return {"ok": True, "status": camera_manager.get_status()}
+
+
+@api.websocket("/ws/camera")
+async def ws_camera(ws: WebSocket):
+    """Live binary MJPEG stream for FPV camera."""
+    await camera_manager.add_client(ws)
+    try:
+        while True:
+            # Keep connection alive; client can send control pings
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        camera_manager.remove_client(ws)
+    except Exception:
+        camera_manager.remove_client(ws)
+
+
+@api.get("/lidar/status", tags=["Vision"])
+async def get_lidar_status():
+    """Current 2D LiDAR scanner status."""
+    return lidar_manager.get_status()
+
+
+@api.post("/lidar/start", tags=["Vision"])
+async def start_lidar():
+    """Start LiDAR scanner streaming."""
+    await lidar_manager.start()
+    return {"ok": True, "status": lidar_manager.get_status()}
+
+
+@api.post("/lidar/stop", tags=["Vision"])
+async def stop_lidar():
+    """Stop LiDAR scanner streaming."""
+    await lidar_manager.stop()
+    return {"ok": True, "status": lidar_manager.get_status()}
+
+
+@api.websocket("/ws/lidar")
+async def ws_lidar(ws: WebSocket):
+    """Live 2D 360° LiDAR polar point scan stream at ~10 Hz."""
+    await lidar_manager.add_client(ws)
+    try:
+        while True:
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        lidar_manager.remove_client(ws)
+    except Exception:
+        lidar_manager.remove_client(ws)
 
 
 # ---------------------------------------------------------------------------

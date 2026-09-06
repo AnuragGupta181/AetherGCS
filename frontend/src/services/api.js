@@ -29,3 +29,13 @@ export const missionsApi = {
   remove: (id) => client.delete(`/missions/${id}`).then((r) => r.data),
   duplicate: (id) => client.post(`/missions/${id}/duplicate`).then((r) => r.data),
 };
+
+export const visionApi = {
+  getDevices: () => client.get("/camera/devices").then((r) => r.data),
+  getCameraStatus: () => client.get("/camera/status").then((r) => r.data),
+  startCamera: (source = 0) => client.post(`/camera/start?source=${encodeURIComponent(source)}`).then((r) => r.data),
+  stopCamera: () => client.post("/camera/stop").then((r) => r.data),
+  getLidarStatus: () => client.get("/lidar/status").then((r) => r.data),
+  startLidar: () => client.post("/lidar/start").then((r) => r.data),
+  stopLidar: () => client.post("/lidar/stop").then((r) => r.data),
+};

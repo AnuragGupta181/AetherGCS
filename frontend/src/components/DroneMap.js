@@ -273,7 +273,7 @@ export default function DroneMap() {
   }, [activeDrone, draftWaypoints]);
 
   return (
-    <div data-testid="map-container" className="flex-1 relative bg-[#0a0a0a]">
+    <div data-testid="map-container" className="flex-1 w-full h-full min-h-0 min-w-0 relative bg-[#0a0a0a] overflow-hidden">
       <MapContainer
         center={center}
         zoom={17}
@@ -388,8 +388,8 @@ export default function DroneMap() {
         )}
       </MapContainer>
 
-      {/* Top Left Instructions Overlay */}
-      <div className="absolute top-3 left-3 z-[500] bg-zinc-900/90 border border-zinc-700 px-3 py-1.5 backdrop-blur-xs transition-all">
+      {/* Top Left Instructions Overlay (offset from zoom buttons) */}
+      <div className="absolute top-3 left-14 z-[500] bg-zinc-900/90 border border-zinc-700 px-3 py-1.5 backdrop-blur-xs transition-all shadow-md">
         <div className="font-mono text-[10px] text-zinc-200">
           CLICK MAP TO ADD WAYPOINT (<span className="text-[#FFB000]">{draftWaypoints.length}</span>)
         </div>

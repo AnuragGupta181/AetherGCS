@@ -251,6 +251,8 @@ export default function TopToolbar() {
   const selected = useSelectedDrones();
   const activeId = useGCS((s) => s.activeDroneId);
   const drones = useGCS((s) => s.drones);
+  const layoutMode = useGCS((s) => s.layoutMode);
+  const setLayoutMode = useGCS((s) => s.setLayoutMode);
   const [addOpen, setAddOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);

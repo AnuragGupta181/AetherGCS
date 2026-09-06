@@ -37,6 +37,14 @@ export const useGCS = create((set, get) => ({
   levelCardOpen: true,
   toggleLevelCard: () => set((s) => ({ levelCardOpen: !s.levelCardOpen })),
 
+  // Central workspace layout: "grid-3" | "split-v" | "split-h" | "full-map"
+  layoutMode: "grid-3",
+  setLayoutMode: (mode) => {
+    set({ layoutMode: mode });
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 250);
+  },
+
   setSnapshot: (list) => {
     const map = {};
     list.forEach((d) => (map[d.id] = d));
