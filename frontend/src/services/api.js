@@ -38,4 +38,6 @@ export const visionApi = {
   getLidarStatus: () => client.get("/lidar/status").then((r) => r.data),
   startLidar: () => client.post("/lidar/start").then((r) => r.data),
   stopLidar: () => client.post("/lidar/stop").then((r) => r.data),
+  getCameraAiStatus: () => client.get("/camera/ai/status").then((r) => r.data),
+  toggleCameraAi: (state) => client.post(`/camera/ai/toggle${state !== undefined ? `?state=${state}` : ''}`).then((r) => r.data),
 };

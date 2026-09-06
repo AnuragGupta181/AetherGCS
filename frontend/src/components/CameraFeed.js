@@ -9,6 +9,7 @@ import {
   Maximize2,
   Minimize2,
   Radio,
+  Brain,
 } from "lucide-react";
 
 export default function CameraFeed({ className = "" }) {
@@ -26,6 +27,7 @@ export default function CameraFeed({ className = "" }) {
   const [connected, setConnected] = useState(false);
   const [fps, setFps] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [aiActive, setAiActive] = useState(false);
   const containerRef = useRef(null);
 
   // Measure frontend render FPS
@@ -48,6 +50,15 @@ export default function CameraFeed({ className = "" }) {
       }
     } catch (e) {
       console.warn("Failed to load camera devices", e);
+    }
+
+    try {
+      const aiStatus = await visionApi.getCameraAiStatus().catch(() => null);
+      if (aiStatus) {
+        setAiActive(aiStatus.ai_active);
+      }
+    } catch (e) {
+      console.warn("Failed to load AI status", e);
     }
   }, []);
 
@@ -167,6 +178,15 @@ export default function CameraFeed({ className = "" }) {
     }
   };
 
+  const toggleAi = async () => {
+    try {
+      const res = await visionApi.toggleCameraAi();
+      setAiActive(res.ai_active);
+    } catch (e) {
+      console.error("Failed to toggle AI", e);
+    }
+  };
+
   const takeSnapshot = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -255,6 +275,17 @@ export default function CameraFeed({ className = "" }) {
           </button>
 
           <button
+            onClick={toggleAi}
+            title={aiActive ? "Disable AI Inference" : "Enable AI Inference"}
+            className={`p-1 rounded transition ${
+              aiActive ? "text-purple-400 hover:bg-purple-950/50" : "text-zinc-400 hover:bg-zinc-800"
+            }`}
+          >
+            <Brain className={`w-3.5 h-3.5 ${aiActive ? "animate-pulse" : ""}`} />
+          </button>
+
+
+          <button
             onClick={toggleFullscreen}
             title="Toggle Fullscreen"
             className="p-1 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition"
@@ -309,12 +340,19 @@ export default function CameraFeed({ className = "" }) {
                 </span>
               </div>
 
-              {/* Top Right: Battery Status */}
-              <div className="bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded border border-white/5 text-[#00FF41] font-bold">
-                BAT: {telemetry?.battery_percent ? `${Math.round(telemetry.battery_percent)}%` : "100%"}
-                <span className="text-zinc-300 font-normal ml-1">
-                  ({telemetry?.battery_voltage ? telemetry.battery_voltage.toFixed(1) : "16.8"}V)
-                </span>
+              {/* Top Right: Battery & AI Status */}
+              <div className="flex flex-col items-end gap-1.5">
+                <div className="bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded border border-white/5 text-[#00FF41] font-bold">
+                  BAT: {telemetry?.battery_percent ? `${Math.round(telemetry.battery_percent)}%` : "100%"}
+                  <span className="text-zinc-300 font-normal ml-1">
+                    ({telemetry?.battery_voltage ? telemetry.battery_voltage.toFixed(1) : "16.8"}V)
+                  </span>
+                </div>
+                {aiActive && (
+                  <div className="bg-purple-950/80 backdrop-blur-sm px-2 py-0.5 rounded border border-purple-500/50 text-[#d8b4fe] font-bold text-[9px] animate-pulse">
+                    AI INFERENCE: ACTIVE
+                  </div>
+                )}
               </div>
             </div>
 

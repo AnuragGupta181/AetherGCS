@@ -407,6 +407,20 @@ async def stop_camera():
     return {"ok": True, "status": camera_manager.get_status()}
 
 
+@api.get("/camera/ai/status", tags=["Vision"])
+async def get_camera_ai_status():
+    """Check if AI object detection is currently active."""
+    return {"ai_active": camera_manager.ai.is_active}
+
+
+@api.post("/camera/ai/toggle", tags=["Vision"])
+async def toggle_camera_ai(state: Optional[bool] = None):
+    """Toggle AI object detection on or off."""
+    is_active = camera_manager.ai.toggle(state)
+    return {"ok": True, "ai_active": is_active}
+
+
+
 @api.websocket("/ws/camera")
 async def ws_camera(ws: WebSocket):
     """Live binary MJPEG stream for FPV camera."""

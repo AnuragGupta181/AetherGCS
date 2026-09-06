@@ -20,6 +20,8 @@ import cv2
 import numpy as np
 from fastapi import WebSocket
 
+from gcs.ai_pipeline import HazardDetector
+
 logger = logging.getLogger("gcs.camera")
 
 
@@ -38,6 +40,9 @@ class CameraManager:
         self.fps_actual: float = 0.0
         self.last_frame_bytes: Optional[bytes] = None
         self._lock = asyncio.Lock()
+        
+        # Initialize AI Pipeline
+        self.ai = HazardDetector()
 
     def list_available_devices(self) -> List[Dict[str, Any]]:
         """Detect available V4L2/USB camera devices on the host system."""
@@ -275,6 +280,11 @@ class CameraManager:
                 else:
                     # Synthetic / Simulated SAR feed
                     frame = self._generate_synthetic_frame(t0)
+
+                # Run AI pipeline (only does work if enabled)
+                if frame is not None:
+                    # process_frame handles drawing directly on the frame
+                    frame = self.ai.process_frame(frame)
 
                 # JPEG compression
                 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality]
