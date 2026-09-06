@@ -120,4 +120,17 @@ For production, the recommended hosting stack is:
 - **Backend**: Render (Web Service)
 - **Frontend**: Vercel
 
-*Make sure to update your production environment variables (like `REACT_APP_BACKEND_URL` and `MONGO_URL`) on the respective hosting platforms!*
+### Deploying Backend to Render
+When configuring your Web Service on Render:
+1. **Root Directory**: `backend` (if repo root is not `backend`)
+2. **Build Command**: `pip install -r requirements.txt`
+3. **Start Command**: `uvicorn server:app --host 0.0.0.0 --port $PORT`
+   *(Crucial: Render requires binding to `0.0.0.0` and using the dynamic `$PORT` environment variable)*
+4. **Health Check Path**: `/health` (supports both `GET` and `HEAD` requests)
+5. **Environment Variables**:
+   - `MONGO_URL`: Your MongoDB Atlas connection string
+   - `DB_NAME`: `aether_gcs`
+   - `CORS_ORIGINS`: Your production frontend URL (e.g. `https://your-aethergcs.vercel.app`)
+
+*Make sure to update your production environment variables (like `REACT_APP_BACKEND_URL` in Vercel) to point to your live Render backend URL!*
+

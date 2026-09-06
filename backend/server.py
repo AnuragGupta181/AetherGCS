@@ -131,7 +131,7 @@ async def _shutdown() -> None:
 # ---------------------------------------------------------------------------
 # Root & Health Routes
 # ---------------------------------------------------------------------------
-@app.get("/", tags=["System"])
+@app.api_route("/", methods=["GET", "HEAD"], tags=["System"])
 async def root():
     """Root entrypoint returning service metadata."""
     return {
@@ -143,8 +143,8 @@ async def root():
     }
 
 
-@app.get("/health", tags=["System"])
-@api.get("/health", tags=["System"])
+@app.api_route("/health", methods=["GET", "HEAD"], tags=["System"])
+@api.api_route("/health", methods=["GET", "HEAD"], tags=["System"])
 async def health_check():
     """System health check endpoint."""
     drones = drone_manager.list_drones()
@@ -158,7 +158,7 @@ async def health_check():
     }
 
 
-@api.get("/", tags=["System"])
+@api.api_route("/", methods=["GET", "HEAD"], tags=["System"])
 async def api_root():
     """API router root endpoint."""
     return {
@@ -384,3 +384,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
