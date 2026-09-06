@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import "leaflet/dist/leaflet.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background-color: #0d0d10;
+  color: #f4f4f5;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  :root {
+    --background: 240 5% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 4% 10%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 4% 10%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 40 100% 50%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 240 4% 15%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 4% 15%;
+    --muted-foreground: 240 4% 65%;
+    --accent: 240 4% 15%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 350 100% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 40 100% 50%;
+    --radius: 2px;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+}
+
+/* Leaflet dark tweaks */
+.leaflet-container {
+  background: #1a1a1d;
+  font-family: "JetBrains Mono", monospace;
+}
+/* Slightly brighten the dark tiles for readability */
+.leaflet-tile-pane { filter: brightness(1.35) contrast(1.05); }
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.7) !important;
+  color: #a1a1aa !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a { color: #d4d4d8 !important; }
+.leaflet-bar { border: 1px solid rgba(255,255,255,0.2) !important; }
+.leaflet-bar a {
+  background: #27272a !important;
+  color: #f4f4f5 !important;
+  border-bottom-color: rgba(255,255,255,0.15) !important;
+}
+.leaflet-bar a:hover { background: #3f3f46 !important; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #18181b; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+/* selection */
+::selection { background: #FFB000; color: #000; }
+
+/* drone marker */
+.drone-marker {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+.drone-marker svg { filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.55)); }
+.drone-marker.selected svg { filter: drop-shadow(0 0 8px rgba(255, 176, 0, 0.9)); }
+
+.waypoint-marker {
+  width: 24px; height: 24px;
+  background: #FFB000;
+  color: #000;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid #000;
+  box-shadow: 0 0 0 1px rgba(255, 176, 0, 0.4);
+}
+
+.home-marker {
+  width: 22px; height: 22px;
+  background: transparent;
+  border: 2px solid #00F0FF;
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px rgba(0,240,255,0.7);
+}
+
+/* "You are here" pulsing dot */
+.user-marker {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+.user-marker-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #00F0FF;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.6);
+  animation: user-pulse 1.8s ease-in-out infinite;
+}
+@keyframes user-pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(1.25); opacity: 0.75; }
+}

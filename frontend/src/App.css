@@ -1,0 +1,2 @@
+/* GCS app-level styles are handled via Tailwind + index.css */
+.App { height: 100vh; width: 100vw; overflow: hidden; }
