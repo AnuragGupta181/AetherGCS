@@ -1,6 +1,28 @@
+<div align="center">
+
+<img src="frontend/public/favicon.svg" alt="AetherGCS Logo" width="120" height="120" />
+
 # AetherGCS
 
-A modern, web-based Multi-Drone Ground Control Station (GCS).
+A modern, web-based Multi-Drone Ground Control Station (GCS) & Tactical Vision System.
+
+<br />
+
+[![YOLO11](https://img.shields.io/badge/YOLO11-Ultralytics-00A67E?logo=target&logoColor=white)](https://github.com/ultralytics/ultralytics)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
+[![PyMAVLink](https://img.shields.io/badge/MAVLink-PyMAVLink-268BEE?logo=drone&logoColor=white)](https://mavlink.io/en/)
+
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](https://react.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Motor%20Async-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04_LTS-e95420?logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+
+<br />
+
+</div>
 
 ## Overview
 AetherGCS allows operators to connect, monitor, and command multiple drones simultaneously through a sleek web interface. It consists of a fast, asynchronous Python backend for hardware communication and a modern React frontend for real-time telemetry and mission planning on an interactive map.
@@ -17,21 +39,25 @@ AetherGCS allows operators to connect, monitor, and command multiple drones simu
 
 ## Technology Stack
 
-### Frontend
-- **Framework**: React (Create React App / Craco)
-- **Styling & UI**: Tailwind CSS, Radix UI, Lucide Icons
-- **Maps**: Leaflet & React-Leaflet
-- **State Management**: Zustand & React Query
-- **Testing & Build**: Jest, React Testing Library, Craco Build
-- **Deployment**: Vercel
+### Computer Vision & AI
+- **AI Inference Model**: Ultralytics YOLO11 (`yolo11n.pt`) for real-time survivor & hazard detection
+- **Vision Processing**: OpenCV (`cv2`) & NumPy for live frame transformation and HUD drawing
+- **Live Video Streaming**: Binary MJPEG streaming over low-latency WebSockets
 
 ### Backend
 - **Framework**: Python 3.10+ & FastAPI
-- **Computer Vision & AI**: Ultralytics YOLO11, OpenCV (`cv2`), NumPy
-- **Real-Time**: WebSockets for telemetry broadcasting & binary MJPEG streaming
-- **Drone Comms**: PyMAVLink & PySerial
-- **Database**: MongoDB (using Motor for async I/O)
+- **Drone Protocol**: PyMAVLink & PySerial (MAVLink communication over Serial/UDP/TCP)
+- **Real-Time Data**: WebSockets for 5 Hz live telemetry broadcast
+- **Database**: MongoDB (using Motor for asynchronous I/O)
 - **Deployment**: Render
+
+### Frontend
+- **Framework**: React 19 (Craco / Create React App)
+- **Styling & UI**: Tailwind CSS, Radix UI, Lucide Icons
+- **Tactical Mapping**: Leaflet & React-Leaflet
+- **State Management**: Zustand & React Query
+- **Testing & Build**: Jest, React Testing Library, Craco Build
+- **Deployment**: Vercel
 
 
 ---
