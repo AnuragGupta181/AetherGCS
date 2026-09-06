@@ -212,5 +212,77 @@ class TestWebSocket:
         session.delete(f"{API}/drones/{d['id']}", timeout=10)
 
 
+# --- Camera & AI Detection ------------------------------------------------
+class TestCameraAndAI:
+    def test_camera_status_and_devices(self, session):
+        r = session.get(f"{API}/camera/status", timeout=10)
+        assert r.status_code == 200
+        assert "running" in r.json()
+
+        r = session.get(f"{API}/camera/devices", timeout=10)
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_camera_ai_pipeline_status_and_toggle(self, session):
+        # Check initial status
+        r = session.get(f"{API}/camera/ai/status", timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert "ai_active" in data
+
+        # Explicit toggle to True
+        r = session.post(f"{API}/camera/ai/toggle?state=true", timeout=10)
+        assert r.status_code == 200
+        assert r.json()["ai_active"] is True
+
+        # Explicit toggle to False
+        r = session.post(f"{API}/camera/ai/toggle?state=false", timeout=10)
+        assert r.status_code == 200
+        assert r.json()["ai_active"] is False
+
+        # Toggle inversion (False -> True)
+        r = session.post(f"{API}/camera/ai/toggle", timeout=10)
+        assert r.status_code == 200
+        assert r.json()["ai_active"] is True
+
+        # Restore to False
+        r = session.post(f"{API}/camera/ai/toggle?state=false", timeout=10)
+        assert r.status_code == 200
+        assert r.json()["ai_active"] is False
+
+
+class TestHazardDetectorPipeline:
+    def test_detector_inference_unit(self):
+        import sys
+        backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_root not in sys.path:
+            sys.path.insert(0, backend_root)
+
+        import numpy as np
+        from gcs.ai_pipeline import HazardDetector
+
+        detector = HazardDetector()
+        assert detector.is_active is False
+        assert detector.model is not None
+
+        # Test frame processing when inactive (passthrough)
+        test_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+        processed = detector.process_frame(test_frame)
+        assert processed.shape == (480, 640, 3)
+
+        # Activate and test processing
+        detector.toggle(True)
+        assert detector.is_active is True
+        processed_active = detector.process_frame(test_frame)
+        assert processed_active.shape == (480, 640, 3)
+        assert processed_active.dtype == np.uint8
+
+        # Clean up / deactivate
+        detector.toggle(False)
+        assert detector.is_active is False
+
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+

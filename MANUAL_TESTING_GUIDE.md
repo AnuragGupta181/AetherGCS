@@ -209,6 +209,46 @@ SITL forwards MAVLink packets on UDP port `14550` or TCP port `5760`.
 
 ---
 
+## Phase 3 — Live Video, YOLO11 AI Detection & Multi-View Testing
+
+### Step 1: Test Multi-View Window Selector
+1. Observe the bottom-right corner of the center map panel.
+2. Locate the **VIEW LAYOUT** floating glassmorphism control box:
+   - Checkboxes for `MAP`, `CAM`, and `LIDAR`.
+3. Test toggling views:
+   - Uncheck `CAM` / `LIDAR`: Verify only the full-screen interactive Map displays.
+   - Check `CAM`: Verify the Camera Feed floating panel docks at the top right of the map.
+   - Check `LIDAR`: Verify the 3D LiDAR point cloud viewer opens alongside the camera feed.
+   - Drag the header of the Camera or LiDAR window to reposition it anywhere on your tactical display.
+
+---
+
+### Step 2: Test Live Camera Streaming
+1. In the **Camera Feed** floating window, click the **Settings (Gear Icon)** in the window header.
+2. Select your video source:
+   - Choose your physical webcam (e.g. `HP Wide Vision HD Camera (/dev/video0)` or OTG Receiver).
+   - Or select `Synthetic SAR AI FPV Feed (Simulation)` for software testing.
+3. Click **Start Stream**:
+   - Status badge turns green: `STREAMING`.
+   - Real-time video renders at ~25 FPS with low latency.
+   - Latency counter displays round-trip network performance (e.g. `24ms`).
+
+---
+
+### Step 3: Test YOLO11 AI Hazard & Human Detection
+1. In the Camera Feed window header, locate the **Brain Icon** button (AI Inference toggle).
+2. Click the **Brain Icon** to activate AI inference:
+   - The button highlights in vibrant emerald green.
+   - The on-screen display (OSD) top-left badge displays: **`AI INFERENCE: ACTIVE`** with an emerald pulsing dot.
+3. Observe tactical computer vision overlays:
+   - When a person enters the camera frame (or in synthetic SAR mode), high-visibility cyan tactical bounding boxes automatically surround the detected subject.
+   - A tactical label tag indicates the class name (`PERSON`) and confidence score (e.g., `87%`).
+4. Click the **Brain Icon** again to deactivate AI inference:
+   - The OSD badge changes to `AI INFERENCE: OFF`.
+   - Bounding boxes are immediately removed, reverting to raw video stream.
+
+---
+
 ## Manual Verification Checklist
 
 | Test Item | Feature | Pass Criteria | Status |
@@ -225,7 +265,11 @@ SITL forwards MAVLink packets on UDP port `14550` or TCP port `5760`.
 | **10** | Landing Sequence | `LAND` descends vertically to `0.0m` and auto-disarms | [ ] |
 | **11** | Multi-Drone Fleet | Swarm selection executes multi-drone ARM/TAKEOFF/LAND simultaneously | [ ] |
 | **12** | Emergency Stop | `E-STOP` forces instant motor disarm | [ ] |
+| **13** | Multi-View Selector | Checkboxes toggle Map, Camera, and LiDAR without overlapping HUD buttons | [ ] |
+| **14** | Live Video Stream | Physical /dev/video* or synthetic feed streams cleanly with latency stats | [ ] |
+| **15** | YOLO11 AI Pipeline | Brain toggle activates inference; renders bounding boxes & confidence tags | [ ] |
 
 ---
 
 *Once all items in this checklist pass using the simulator, your GCS setup is fully verified and ready for real drone operations.*
+

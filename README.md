@@ -8,10 +8,12 @@ AetherGCS allows operators to connect, monitor, and command multiple drones simu
 ## Key Features
 - **Multi-Drone Management**: Connect to multiple drones simultaneously via serial/COM ports (MAVLink protocol).
 - **Real-Time Telemetry**: Live drone state (altitude, speed, battery, GPS) streamed at ~5Hz via WebSockets.
-- **Mission Planning**: Create, edit, and manage complex flight missions with distinct waypoints and altitude profiles.
+- **YOLO11 AI Hazard & Human Detection**: Real-time on-board/server-side AI inference pipeline powered by Ultralytics YOLO11 (`yolo11n.pt`) with tactical bounding box overlays, confidence scores, and instant toggle control.
+- **Live FPV Camera & LiDAR Streaming**: Low-latency video streaming (UVC webcams, 5.8GHz OTG receivers, and synthetic SAR thermal/RGB feed) alongside 3D point cloud visualization.
+- **Configurable Multi-View Display**: Adjustable multi-select view manager to toggle and position Map, Camera Feed, and LiDAR overlays without screen clutter.
+- **Mission Planning & Survey Grids**: Create, edit, and manage complex flight missions with distinct waypoints, altitude profiles, and automated lawnmower survey patterns.
 - **Command & Control**: Send real-time commands (e.g., Takeoff, Land, Return to Launch) to one or multiple drones at once.
-- **Mission Library**: Save missions to the database, duplicate them, or import/export them as JSON files.
-- **Command History**: Keep a logged history of all commands sent to the fleet and their execution status.
+- **Mission Library & Command History**: Save, duplicate, or import/export missions, with logged command history and status tracking.
 
 ## Technology Stack
 
@@ -20,14 +22,17 @@ AetherGCS allows operators to connect, monitor, and command multiple drones simu
 - **Styling & UI**: Tailwind CSS, Radix UI, Lucide Icons
 - **Maps**: Leaflet & React-Leaflet
 - **State Management**: Zustand & React Query
+- **Testing & Build**: Jest, React Testing Library, Craco Build
 - **Deployment**: Vercel
 
 ### Backend
 - **Framework**: Python 3.10+ & FastAPI
-- **Real-Time**: WebSockets for telemetry broadcasting
+- **Computer Vision & AI**: Ultralytics YOLO11, OpenCV (`cv2`), NumPy
+- **Real-Time**: WebSockets for telemetry broadcasting & binary MJPEG streaming
 - **Drone Comms**: PyMAVLink & PySerial
 - **Database**: MongoDB (using Motor for async I/O)
 - **Deployment**: Render
+
 
 ---
 
@@ -114,6 +119,47 @@ pnpm build
 
 ---
 
+## AI Hazard Detection & Model Architecture
+
+AetherGCS features a dedicated computer vision pipeline powered by **Ultralytics YOLO11**:
+- **Current Model**: `yolo11n.pt` (saved at `backend/yolo11n.pt`), pre-trained on COCO for real-time human / survivor detection.
+- **Tactical OSD**: Draws bounding boxes, confidence tags, and class identifiers server-side with zero latency jitter.
+- **Custom Disaster Model Upgrade**: Drop your custom-trained disaster model weights (`.pt` file trained for floods, landslides, fires, or structural collapse) into the `backend/` directory, and update `model_path` in `backend/gcs/ai_pipeline.py`.
+
+### Camera & Vision REST Endpoints
+| Endpoint | Method | Description |
+|:---|:---:|:---|
+| `/api/camera/devices` | `GET` | Lists available physical video capture devices and synthetic feeds |
+| `/api/camera/status` | `GET` | Returns active camera state, current FPS, source, and streaming stats |
+| `/api/camera/start?source=0` | `POST` | Starts video capture on specified device index or `'synthetic'` |
+| `/api/camera/stop` | `POST` | Stops video streaming and frees hardware capture handle |
+| `/api/camera/ai/status` | `GET` | Returns active status of YOLO11 detection pipeline |
+| `/api/camera/ai/toggle?state=true` | `POST` | Toggles or explicitly sets AI inference state |
+| `/api/ws/camera` | `WebSocket`| High-speed binary MJPEG stream for live FPV video feed |
+
+---
+
+## Running Tests
+
+### Backend Tests (pytest)
+Runs full integration and unit tests for drones, missions, commands, WebSocket telemetry, camera, and AI pipelines:
+```bash
+cd backend
+env -u PYTHONPATH ./.venv/bin/pytest -v tests/test_gcs_backend.py
+```
+
+### Frontend Tests & Production Build
+```bash
+cd frontend
+# Run Jest test suite:
+CI=true npm test -- --watchAll=false
+
+# Run production build:
+npm run build
+```
+
+---
+
 ## Deployment
 For production, the recommended hosting stack is:
 - **Database**: MongoDB Atlas (Free Tier)
@@ -133,4 +179,5 @@ When configuring your Web Service on Render:
    - `CORS_ORIGINS`: Your production frontend URL (e.g. `https://your-aethergcs.vercel.app`)
 
 *Make sure to update your production environment variables (like `REACT_APP_BACKEND_URL` in Vercel) to point to your live Render backend URL!*
+
 

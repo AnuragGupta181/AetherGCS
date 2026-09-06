@@ -186,6 +186,39 @@ If you prefer to fly the drone manually (similar to a Mode 2 RC Transmitter), AE
 
 ---
 
-> **Looking to test before flying real hardware?** See the complete **[Manual Testing Guide](MANUAL_TESTING_GUIDE.md)** for a 12-step verification walkthrough using the built-in simulator.
+## 7. Live Video Streaming & YOLO11 AI Hazard Detection
+
+AETHER GCS provides an integrated real-time vision stack equipped with low-latency binary MJPEG streaming, multi-window layout controls, and deep learning hazard detection.
+
+### Multi-View Layout Controls
+Located in the **bottom-right corner of the main map**, a floating glassmorphism control box allows instant customisation of what is rendered on screen:
+- **MAP**: Toggles the interactive tactical Leaflet map.
+- **CAM**: Toggles the live FPV Camera Feed window.
+- **LIDAR**: Toggles the real-time 3D LiDAR point cloud viewer.
+
+You can drag each floating window by its header bar to position it anywhere on screen, or resize and collapse it as needed.
+
+### Video Source Selection
+1. Click the **Gear (Settings)** icon in the Camera Feed window header.
+2. Under **Device Source**, select:
+   - Any connected physical USB capture card, OTG receiver, or integrated webcam (e.g., `/dev/video0`).
+   - Or select `Synthetic SAR AI FPV Feed (Simulation)` to test computer vision without hardware.
+3. Click **Start Stream** to initiate low-latency video streaming.
+4. The tactical OSD reports real-time video FPS, camera status, and round-trip network latency (e.g., `18ms`).
+
+### YOLO11 AI Hazard & Survivor Detection
+1. In the Camera Feed window header, click the **Brain Icon** button to toggle AI inference on or off.
+2. When activated:
+   - The top-left tactical badge shows **`AI INFERENCE: ACTIVE`** with an emerald status pulse.
+   - The on-board/server-side YOLO11 pipeline runs real-time inference on incoming camera frames.
+   - Bounding boxes, class tags (`PERSON`), and detection confidence percentages are drawn directly onto the video stream.
+3. **Plugging in Custom Disaster Models:**
+   - Default weights are saved at `backend/yolo11n.pt` (pre-trained COCO dataset for human/survivor detection).
+   - To detect disasters (such as floods, landslides, wildfires, or collapsed buildings), place your fine-tuned `.pt` weights file into `backend/` and update `model_path` in `backend/gcs/ai_pipeline.py`.
+
+---
+
+> **Looking to test before flying real hardware?** See the complete **[Manual Testing Guide](MANUAL_TESTING_GUIDE.md)** for a 15-step verification walkthrough using the built-in simulator.
 
 *Fly safely and always adhere to local aviation regulations when using AETHER GCS outdoors.*
+

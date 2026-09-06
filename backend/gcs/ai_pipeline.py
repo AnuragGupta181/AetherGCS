@@ -1,7 +1,7 @@
 """YOLO11-based AI Hazard Detection Pipeline."""
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -26,14 +26,18 @@ class HazardDetector:
         except Exception as e:
             logger.error("Failed to load YOLO model: %s", e)
 
-    def toggle(self, state: Optional[bool] = None) -> bool:
+    def toggle(self, state: Optional[Union[bool, str]] = None) -> bool:
         """Toggle or explicitly set the active state of the AI pipeline."""
         if state is not None:
-            self.is_active = state
+            if isinstance(state, str):
+                self.is_active = state.lower() in ("true", "1", "yes")
+            else:
+                self.is_active = bool(state)
         else:
             self.is_active = not self.is_active
         logger.info("AI Pipeline active state: %s", self.is_active)
         return self.is_active
+
 
     def process_frame(self, frame: np.ndarray) -> np.ndarray:
         """Run YOLO inference and draw bounding boxes directly onto the frame."""

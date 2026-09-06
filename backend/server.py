@@ -11,10 +11,10 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from starlette.middleware.cors import CORSMiddleware
 
 ROOT_DIR = Path(__file__).parent
@@ -414,10 +414,11 @@ async def get_camera_ai_status():
 
 
 @api.post("/camera/ai/toggle", tags=["Vision"])
-async def toggle_camera_ai(state: Optional[bool] = None):
+async def toggle_camera_ai(state: Optional[bool] = Query(default=None)):
     """Toggle AI object detection on or off."""
     is_active = camera_manager.ai.toggle(state)
     return {"ok": True, "ai_active": is_active}
+
 
 
 
