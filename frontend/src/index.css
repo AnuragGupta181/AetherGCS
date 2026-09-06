@@ -10,10 +10,21 @@ html, body, #root {
   margin: 0;
   background-color: #0d0d10;
   color: #f4f4f5;
+  color-scheme: dark;
   font-family: "IBM Plex Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #18181b;
+  color: #f4f4f5;
+}
+
 
 @layer base {
   :root {

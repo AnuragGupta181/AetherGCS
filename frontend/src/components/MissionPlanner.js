@@ -190,12 +190,12 @@ export default function MissionPlanner() {
                       data-testid={`wp-action-${wp.seq}`}
                       value={wp.action}
                       onChange={(e) => updateWaypoint(wp.seq, { action: e.target.value })}
-                      className="bg-transparent border border-zinc-800 text-zinc-200 text-xs rounded-none focus:outline-none focus:border-[#FFB000]"
+                      className="bg-zinc-900 border border-zinc-700 text-zinc-100 text-xs px-2 py-1 rounded cursor-pointer focus:outline-none focus:border-[#FFB000] focus:ring-1 focus:ring-[#FFB000]/50 transition-colors"
                     >
-                      <option value="waypoint">Waypoint</option>
-                      <option value="takeoff">Takeoff</option>
-                      <option value="land">Land</option>
-                      <option value="rtl">RTL</option>
+                      <option value="waypoint" className="bg-zinc-900 text-zinc-100 py-1">Waypoint</option>
+                      <option value="takeoff" className="bg-zinc-900 text-zinc-100 py-1">Takeoff</option>
+                      <option value="land" className="bg-zinc-900 text-zinc-100 py-1">Land</option>
+                      <option value="rtl" className="bg-zinc-900 text-zinc-100 py-1">RTL</option>
                     </select>
                   </td>
                   <td className="px-3 py-1.5 text-right text-zinc-300">{wp.latitude.toFixed(6)}</td>
