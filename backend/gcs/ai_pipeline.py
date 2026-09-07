@@ -61,14 +61,14 @@ class HazardDetector:
                     cls_id = int(box.cls[0])
                     label_name = self.model.names[cls_id]
 
-                    # Define colors based on the class (e.g. green for person, red/orange for fire)
-                    color = (0, 255, 65)  # Default: neon green (BGR format for OpenCV)
-                    if "fire" in label_name.lower():
-                        color = (0, 165, 255)  # Orange
-                    elif "flood" in label_name.lower():
-                        color = (255, 100, 0)  # Blue
-                    elif "ruin" in label_name.lower() or "damage" in label_name.lower():
-                        color = (0, 0, 255)  # Red
+                    # Color mapping: Red for person/human, Neon Green for all others
+                    label_lower = label_name.lower()
+                    if "person" in label_lower or "human" in label_lower:
+                        color = (0, 0, 255)  # Red (BGR) for person
+                        text_color = (255, 255, 255)  # White text on red
+                    else:
+                        color = (0, 255, 65)  # Neon green (BGR) for other classes
+                        text_color = (0, 0, 0)  # Black text on green
 
                     # Draw the bounding box
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
@@ -77,9 +77,12 @@ class HazardDetector:
                     label_text = f"{label_name.upper()} {conf*100:.1f}%"
                     # Background rectangle for text for better readability
                     (tw, th), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)
-                    cv2.rectangle(frame, (x1, y1 - 20), (x1 + tw, y1), color, -1)
-                    cv2.putText(frame, label_text, (x1, y1 - 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
+                    bg_y1 = max(0, y1 - 20)
+                    bg_y2 = y1 if y1 >= 20 else y1 + th + 10
+                    text_y = y1 - 5 if y1 >= 20 else y1 + th + 5
+                    cv2.rectangle(frame, (x1, bg_y1), (x1 + tw + 4, bg_y2), color, -1)
+                    cv2.putText(frame, label_text, (x1 + 2, text_y),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, text_color, 1, cv2.LINE_AA)
                     
         except Exception as e:
             logger.error("Error during AI frame processing: %s", e)

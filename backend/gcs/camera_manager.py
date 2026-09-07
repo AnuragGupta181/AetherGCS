@@ -213,11 +213,11 @@ class CameraManager:
         x1, y1 = survivor_x - box_w // 2, survivor_y - box_h // 2
         x2, y2 = survivor_x + box_w // 2, survivor_y + box_h // 2
 
-        # Draw survivor bounding box (Highlighter Green)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 65), 2)
+        # Draw survivor bounding box (Red for human / person survivor)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
         # Label with confidence
         cv2.putText(frame, "HUMAN_SURVIVOR 94.2%", (x1, max(15, y1 - 6)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 65), 1, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 0, 255), 1, cv2.LINE_AA)
 
         # 2. Hazard detection box (Amber / Fire / Flood warning)
         hazard_x = int(cx - 160 + math.cos(t * 0.2) * 20)
