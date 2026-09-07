@@ -27,6 +27,40 @@ A modern, web-based Multi-Drone Ground Control Station (GCS) & Tactical Vision S
 ## Overview
 AetherGCS allows operators to connect, monitor, and command multiple drones simultaneously through a sleek web interface. It consists of a fast, asynchronous Python backend for hardware communication and a modern React frontend for real-time telemetry and mission planning on an interactive map.
 
+## Architecture
+
+```mermaid
+---
+config:
+  layout: fixed
+---
+flowchart LR
+ subgraph FIELD["DRONES & SENSORS"]
+    direction TB
+        DRONE["<b>Drone Fleet</b><br>ArduPilot SITL"]
+        CAM["<b>Video &amp; LiDAR Feeds</b><br>"]
+  end
+ subgraph SERVER["AETHER SERVER (FastAPI⚡)"]
+    direction TB
+        CORE["<b>Telemetry &amp; Command Engine</b><br>"]
+        AI["<b>YOLO11 AI &amp; Vision Pipeline</b><br>Real-Time Hazard Detection"]
+        DB[("<b>MongoDB</b><br>Missions &amp; Logs")]
+  end
+ subgraph UI["WEB GROUND STATION (React)"]
+    direction TB
+        MAP["<b>Tactical Map &amp; Missions</b><br>"]
+        HUD["<b>Live AI Vision HUD</b><br>"]
+  end
+    CORE <--> DB
+    CORE L_CORE_MAP_0@<== WebSockets & REST ==> MAP
+    CAM == WebSockets ==> AI
+    AI == Annotated Video Stream ==> HUD
+    DRONE <== MAVLink Protocol ==> CORE
+
+
+    L_CORE_MAP_0@{ curve: linear }
+```
+
 ## Key Features
 - **Multi-Drone Management**: Connect to multiple drones simultaneously via serial/COM ports (MAVLink protocol).
 - **Real-Time Telemetry**: Live drone state (altitude, speed, battery, GPS) streamed at ~5Hz via WebSockets.
