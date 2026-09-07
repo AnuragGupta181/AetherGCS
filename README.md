@@ -34,7 +34,7 @@ AetherGCS allows operators to connect, monitor, and command multiple drones simu
 config:
   layout: fixed
 ---
-flowchart LR
+flowchart TB
  subgraph FIELD["DRONES & SENSORS"]
     direction TB
         DRONE["<b>Drone Fleet</b><br>ArduPilot SITL"]
@@ -42,11 +42,11 @@ flowchart LR
   end
  subgraph SERVER["AETHER SERVER (FastAPI⚡)"]
     direction TB
-        CORE["<b>Telemetry &amp; Command Engine</b><br>"]
-        AI["<b>YOLO11 AI &amp; Vision Pipeline</b><br>Real-Time Hazard Detection"]
+        CORE["<b>Telemetry &amp; <br>Command Engine</b><br>"]
+        AI["<b>YOLO11 AI</b><br>Hazard Detection"]
         DB[("<b>MongoDB</b><br>Missions &amp; Logs")]
   end
- subgraph UI["WEB GROUND STATION (React)"]
+ subgraph UI["  WEB GROUND STATION (React)"]
     direction TB
         MAP["<b>Tactical Map &amp; Missions</b><br>"]
         HUD["<b>Live AI Vision HUD</b><br>"]
