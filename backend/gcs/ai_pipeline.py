@@ -1,7 +1,7 @@
 """YOLO11-based AI Hazard Detection Pipeline."""
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -9,11 +9,24 @@ from ultralytics import YOLO
 
 logger = logging.getLogger("gcs.ai_pipeline")
 
+LIVING_BEING_KEYWORDS = (
+    "person", "human", "survivor", "cow", "cattle", "bull", "ox",
+    "horse", "sheep", "goat", "dog", "cat", "bird", "animal",
+    "elephant", "bear", "zebra", "giraffe", "deer"
+)
+
+
+def is_living_being(class_name: str) -> bool:
+    name = class_name.lower().strip()
+    return any(k in name for k in LIVING_BEING_KEYWORDS)
+
+
 class HazardDetector:
     def __init__(self, model_path: str = "yolo11n.pt"):
         self.model_path = model_path
         self.model: Optional[YOLO] = None
         self.is_active: bool = False
+        self.last_detections: List[Dict[str, Any]] = []
         self._load_model()
 
     def _load_model(self) -> None:
@@ -39,8 +52,11 @@ class HazardDetector:
         return self.is_active
 
 
-    def process_frame(self, frame: np.ndarray) -> np.ndarray:
-        """Run YOLO inference and draw bounding boxes directly onto the frame."""
+    def process_frame(
+        self, frame: np.ndarray, on_detection: Optional[Callable[[Dict[str, Any]], None]] = None
+    ) -> np.ndarray:
+        """Run YOLO inference, draw bounding boxes, and report detections."""
+        self.last_detections = []
         if not self.is_active or self.model is None:
             return frame
 
@@ -60,6 +76,21 @@ class HazardDetector:
                     conf = float(box.conf[0])
                     cls_id = int(box.cls[0])
                     label_name = self.model.names[cls_id]
+
+                    # Record detection
+                    living = is_living_being(label_name)
+                    det_info = {
+                        "class_name": label_name,
+                        "confidence": conf,
+                        "box": (x1, y1, x2, y2),
+                        "is_living_being": living,
+                    }
+                    self.last_detections.append(det_info)
+                    if on_detection is not None and living:
+                        try:
+                            on_detection(det_info)
+                        except Exception as cb_err:
+                            logger.error("on_detection callback error: %s", cb_err)
 
                     # Color mapping: Red for person/human, Neon Green for all others
                     label_lower = label_name.lower()
@@ -88,3 +119,4 @@ class HazardDetector:
             logger.error("Error during AI frame processing: %s", e)
 
         return frame
+

@@ -133,3 +133,26 @@ select option {
   0%,100% { transform: scale(1); opacity: 1; }
   50%     { transform: scale(1.25); opacity: 0.75; }
 }
+
+/* AI Geotag marker pulse animations */
+.geotag-custom-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.geotag-pulse-red {
+  background: rgba(239, 68, 68, 0.45);
+  animation: geotag-radar-red 1.6s ease-out infinite;
+}
+@keyframes geotag-radar-red {
+  0%   { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.geotag-pulse-amber {
+  background: rgba(245, 158, 11, 0.45);
+  animation: geotag-radar-amber 1.6s ease-out infinite;
+}
+@keyframes geotag-radar-amber {
+  0%   { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+

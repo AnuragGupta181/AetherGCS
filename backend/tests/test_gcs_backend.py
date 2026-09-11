@@ -2,13 +2,19 @@
 import asyncio
 import json
 import os
+import sys
 import time
+
+# Ensure backend root is in sys.path
+backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_root not in sys.path:
+    sys.path.insert(0, backend_root)
 
 import pytest
 import requests
 import websockets
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8000").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
 API = f"{BASE_URL}/api"
 WS_URL = API.replace("http", "ws") + "/ws/telemetry"
 
@@ -282,7 +288,134 @@ class TestHazardDetectorPipeline:
         assert detector.is_active is False
 
 
+# --- Geotags & AI Geotagging ---------------------------------------------
+class TestGeotagManagerUnit:
+    def test_living_being_keywords(self):
+        from gcs.ai_pipeline import is_living_being
+        assert is_living_being("person") is True
+        assert is_living_being("Human") is True
+        assert is_living_being("cow") is True
+        assert is_living_being("sheep") is True
+        assert is_living_being("dog") is True
+        assert is_living_being("cat") is True
+        assert is_living_being("car") is False
+        assert is_living_being("traffic light") is False
+        assert is_living_being("airplane") is False
+
+    def test_deduplication_5m_15s(self):
+        from gcs.geotag_manager import GeotagManager, haversine_distance
+
+        manager = GeotagManager(mongo_db=None)
+
+        # Base location
+        lat1, lon1 = 28.676643, 77.501816
+        # Very close location (~2 meters away: 0.00002 deg lat is ~2.22m)
+        lat2, lon2 = 28.676661, 77.501816
+        dist = haversine_distance(lat1, lon1, lat2, lon2)
+        assert dist < 5.0, f"Expected < 5m distance, got {dist}"
+
+        async def run_flow():
+            # First detection creates geotag
+            tag1 = await manager.handle_detection(
+                class_name="person",
+                confidence=0.92,
+                latitude=lat1,
+                longitude=lon1,
+                altitude=12.5,
+                drone_id="drone-test",
+            )
+            assert tag1 is not None
+            assert tag1.sighting_count == 1
+            initial_id = tag1.id
+
+            # Second detection 2m away immediately (< 15s) -> deduplicated
+            tag2 = await manager.handle_detection(
+                class_name="person",
+                confidence=0.95,
+                latitude=lat2,
+                longitude=lon2,
+                altitude=12.7,
+                drone_id="drone-test",
+            )
+            assert tag2.id == initial_id
+            assert tag2.sighting_count == 2
+            assert tag2.confidence == 0.95
+            assert len(manager.list()) == 1
+
+            # Third detection > 5m away (~50m away: 0.0005 deg lat is ~55m)
+            lat3 = lat1 + 0.0005
+            tag3 = await manager.handle_detection(
+                class_name="person",
+                confidence=0.88,
+                latitude=lat3,
+                longitude=lon1,
+                altitude=15.0,
+                drone_id="drone-test",
+            )
+            assert tag3.id != initial_id
+            assert len(manager.list()) == 2
+
+        asyncio.run(run_flow())
+
+
+class TestGeotagsApi:
+    def test_geotag_crud_lifecycle(self, session):
+        # 1. Create a geotag via POST
+        create_payload = {
+            "drone_id": "drone-sim-1",
+            "drone_name": "SkyGuard-1",
+            "class_name": "person",
+            "confidence": 0.94,
+            "latitude": 28.676643,
+            "longitude": 77.501816,
+            "altitude": 14.2,
+            "notes": "Spotted near east perimeter",
+        }
+        r = session.post(f"{API}/geotags", json=create_payload, timeout=10)
+        assert r.status_code == 200
+        tag = r.json()
+        tag_id = tag["id"]
+        assert tag["class_name"] == "person"
+        assert tag["status"] == "detected"
+        assert tag["latitude"] == 28.676643
+
+        # 2. Get by ID
+        r = session.get(f"{API}/geotags/{tag_id}", timeout=10)
+        assert r.status_code == 200
+        assert r.json()["id"] == tag_id
+
+        # 3. List geotags
+        r = session.get(f"{API}/geotags", timeout=10)
+        assert r.status_code == 200
+        all_tags = r.json()
+        assert any(t["id"] == tag_id for t in all_tags)
+
+        # 4. Update status: reviewed
+        r = session.patch(f"{API}/geotags/{tag_id}/status", json={"status": "reviewed", "notes": "Reviewed by operator"}, timeout=10)
+        assert r.status_code == 200
+        assert r.json()["status"] == "reviewed"
+        assert r.json()["notes"] == "Reviewed by operator"
+
+        # 5. Update status: in_progress
+        r = session.patch(f"{API}/geotags/{tag_id}/status", json={"status": "in_progress"}, timeout=10)
+        assert r.status_code == 200
+        assert r.json()["status"] == "in_progress"
+
+        # 6. Update status: rescued
+        r = session.patch(f"{API}/geotags/{tag_id}/status", json={"status": "rescued", "notes": "Target safely secured"}, timeout=10)
+        assert r.status_code == 200
+        assert r.json()["status"] == "rescued"
+
+        # 7. Delete geotag
+        r = session.delete(f"{API}/geotags/{tag_id}", timeout=10)
+        assert r.status_code == 200
+
+        # Verify deletion
+        r = session.get(f"{API}/geotags/{tag_id}", timeout=10)
+        assert r.status_code == 404
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
 

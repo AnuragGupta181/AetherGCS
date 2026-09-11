@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/tabs";
 import { useGCS } from "@/store/gcsStore";
 import { createTelemetrySocket } from "@/services/telemetrySocket";
-import { commandsApi, dronesApi, missionsApi } from "@/services/api";
+import { commandsApi, dronesApi, geotagsApi, missionsApi } from "@/services/api";
 import { useUserGeolocation } from "@/hooks/useUserGeolocation";
 import TopToolbar from "@/components/TopToolbar";
 import DroneListSidebar from "@/components/DroneListSidebar";
@@ -23,9 +23,9 @@ import { Layers } from "lucide-react";
 // Constants for layout constraints
 const LEFT   = { min: 50, default: 360, max: 600, field: "leftSidebarWidth" };
 const RIGHT  = { min: 50, default: 360, max: 650, field: "rightSidebarWidth" };
-const BOTTOM = { min: 50, default: 350, max: 1000, field: "missionPlannerHeight" };
-const SENSORS_PANEL = { min: 280, default: 480, max: 900, field: "sensorsPanelWidth" };
-const CAMERA_HEIGHT = { min: 140, default: 280, max: 700, field: "cameraPanelHeight" };
+const BOTTOM = { min: 50, default: 280, max: 500, field: "bottomPanelHeight" };
+const SENSORS_PANEL = { min: 280, default: 460, max: 800, field: "sensorsPanelWidth" };
+const CAMERA_HEIGHT = { min: 150, default: 280, max: 550, field: "cameraHeight" };
 
 export default function GCSPage() {
   const setSnapshot = useGCS((s) => s.setSnapshot);
@@ -35,6 +35,10 @@ export default function GCSPage() {
   const addCommandLog = useGCS((s) => s.addCommandLog);
   const setCommandHistory = useGCS((s) => s.setCommandHistory);
   const setMissions = useGCS((s) => s.setMissions);
+  const setGeotags = useGCS((s) => s.setGeotags);
+  const upsertGeotag = useGCS((s) => s.upsertGeotag);
+  const removeGeotag = useGCS((s) => s.removeGeotag);
+  const clearGeotags = useGCS((s) => s.clearGeotags);
 
   // Future-proof panel selection toggles (default: Map only)
   const [showCamera, setShowCamera] = useState(false);
@@ -98,14 +102,16 @@ export default function GCSPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [drones, history, missions] = await Promise.all([
+        const [drones, history, missions, geotags] = await Promise.all([
           dronesApi.list(),
           commandsApi.history(200),
           missionsApi.list(),
+          geotagsApi.list(),
         ]);
-        setSnapshot(drones);
+        setSnapshot(drones, geotags);
         setCommandHistory(history);
         setMissions(missions);
+        setGeotags(geotags || []);
       } catch (e) {
         console.error("Initial load failed", e);
       }
@@ -116,6 +122,10 @@ export default function GCSPage() {
       onDrone: upsertDrone,
       onDroneRemoved: (msg) => removeDrone(msg.id),
       onCommand: addCommandLog,
+      onGeotagCreated: upsertGeotag,
+      onGeotagUpdated: upsertGeotag,
+      onGeotagDeleted: (msg) => removeGeotag(msg.id),
+      onGeotagCleared: clearGeotags,
       onStatus: setWsStatus,
     });
     return () => socket.close();

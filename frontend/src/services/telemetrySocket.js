@@ -3,7 +3,17 @@ import { API } from "@/services/api";
 /**
  * Real-time telemetry WebSocket handler with auto-reconnect.
  */
-export function createTelemetrySocket({ onSnapshot, onDrone, onDroneRemoved, onCommand, onStatus }) {
+export function createTelemetrySocket({
+  onSnapshot,
+  onDrone,
+  onDroneRemoved,
+  onCommand,
+  onGeotagCreated,
+  onGeotagUpdated,
+  onGeotagDeleted,
+  onGeotagCleared,
+  onStatus,
+}) {
   const wsUrl = API.replace(/^http/, "ws") + "/ws/telemetry";
   let ws = null;
   let closed = false;
@@ -34,10 +44,14 @@ export function createTelemetrySocket({ onSnapshot, onDrone, onDroneRemoved, onC
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
       switch (msg.event) {
-        case "snapshot": onSnapshot && onSnapshot(msg.data); break;
+        case "snapshot": onSnapshot && onSnapshot(msg.data, msg.geotags); break;
         case "drone": onDrone && onDrone(msg.data); break;
         case "drone_removed": onDroneRemoved && onDroneRemoved(msg.data); break;
         case "command": onCommand && onCommand(msg.data); break;
+        case "geotag_created": onGeotagCreated && onGeotagCreated(msg.data); break;
+        case "geotag_updated": onGeotagUpdated && onGeotagUpdated(msg.data); break;
+        case "geotag_deleted": onGeotagDeleted && onGeotagDeleted(msg.data); break;
+        case "geotag_cleared": onGeotagCleared && onGeotagCleared(); break;
         default: break;
       }
     };

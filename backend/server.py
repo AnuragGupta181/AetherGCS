@@ -24,6 +24,7 @@ from gcs.camera_manager import CameraManager
 from gcs.command_log import CommandLogStore
 from gcs.db import close_db
 from gcs.drone_manager import DroneManager
+from gcs.geotag_manager import GeotagManager
 from gcs.lidar_manager import LidarManager
 from gcs.mission_manager import MissionManager
 from gcs.models import (
@@ -32,6 +33,9 @@ from gcs.models import (
     ConnectionProfile,
     Drone,
     DroneCreate,
+    Geotag,
+    GeotagCreate,
+    GeotagStatusUpdate,
     Mission,
     MissionCreate,
     Waypoint,
@@ -52,6 +56,10 @@ mission_manager = MissionManager()
 command_log = CommandLogStore()
 camera_manager = CameraManager()
 lidar_manager = LidarManager()
+geotag_manager = GeotagManager()
+
+camera_manager.set_drone_manager(drone_manager)
+camera_manager.set_geotag_manager(geotag_manager)
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +97,7 @@ class Broadcaster:
         await ws.send_json({
             "event": "snapshot",
             "data": [d.model_dump() for d in drone_manager.list_drones()],
+            "geotags": [g.model_dump() for g in geotag_manager.list()],
         })
 
     def disconnect(self, ws: WebSocket) -> None:
@@ -120,11 +129,17 @@ def _on_drone_update(drone: Drone) -> None:
 @app.on_event("startup")
 async def _startup() -> None:
     drone_manager.subscribe(_on_drone_update)
+    geotag_manager.subscribe(lambda ev, data: broadcaster.push(ev, data))
     await drone_manager.load_saved()
+    await geotag_manager.load_saved()
     await broadcaster.start()
     await camera_manager.start(0)
     await lidar_manager.start()
-    logger.info("GCS started with %d saved drone(s)", len(drone_manager.list_drones()))
+    logger.info(
+        "GCS started with %d saved drone(s) and %d saved geotag(s)",
+        len(drone_manager.list_drones()),
+        len(geotag_manager.list()),
+    )
 
 
 @app.on_event("shutdown")
@@ -467,6 +482,55 @@ async def ws_lidar(ws: WebSocket):
         lidar_manager.remove_client(ws)
     except Exception:
         lidar_manager.remove_client(ws)
+
+
+# ---------------------------------------------------------------------------
+# Geotag Endpoints
+# ---------------------------------------------------------------------------
+@api.get("/geotags", response_model=List[Geotag], tags=["Geotags"])
+async def list_geotags():
+    """List all real-time and historical geotagged detections."""
+    return geotag_manager.list()
+
+
+@api.post("/geotags", response_model=Geotag, tags=["Geotags"])
+async def create_geotag(payload: GeotagCreate):
+    """Manually add a geotagged marker to the tactical map."""
+    return await geotag_manager.create(payload)
+
+
+@api.get("/geotags/{geotag_id}", response_model=Geotag, tags=["Geotags"])
+async def get_geotag(geotag_id: str):
+    """Get details for a specific geotag."""
+    tag = geotag_manager.get(geotag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Geotag not found")
+    return tag
+
+
+@api.patch("/geotags/{geotag_id}/status", response_model=Geotag, tags=["Geotags"])
+async def update_geotag_status(geotag_id: str, payload: GeotagStatusUpdate):
+    """Update operational status and notes for a geotag."""
+    tag = await geotag_manager.update_status(geotag_id, payload.status, payload.notes)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Geotag not found")
+    return tag
+
+
+@api.delete("/geotags/{geotag_id}", tags=["Geotags"])
+async def delete_geotag(geotag_id: str):
+    """Remove a geotag."""
+    ok = await geotag_manager.delete(geotag_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Geotag not found")
+    return {"ok": True}
+
+
+@api.delete("/geotags", tags=["Geotags"])
+async def clear_geotags():
+    """Clear all geotags from the map and database."""
+    await geotag_manager.clear()
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

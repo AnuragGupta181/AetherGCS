@@ -43,6 +43,14 @@ class CameraManager:
         
         # Initialize AI Pipeline
         self.ai = HazardDetector()
+        self.drone_manager: Optional[Any] = None
+        self.geotag_manager: Optional[Any] = None
+
+    def set_drone_manager(self, dm: Any) -> None:
+        self.drone_manager = dm
+
+    def set_geotag_manager(self, gm: Any) -> None:
+        self.geotag_manager = gm
 
     def list_available_devices(self) -> List[Dict[str, Any]]:
         """Detect available V4L2/USB camera devices on the host system."""
@@ -283,8 +291,55 @@ class CameraManager:
 
                 # Run AI pipeline (only does work if enabled)
                 if frame is not None:
-                    # process_frame handles drawing directly on the frame
-                    frame = self.ai.process_frame(frame)
+                    def _on_ai_detection(det: Dict[str, Any]) -> None:
+                        if not self.geotag_manager or not det.get("is_living_being"):
+                            return
+
+                        # Get active or primary drone coordinates
+                        lat = None
+                        lon = None
+                        alt = 0.0
+                        drone_id = None
+                        drone_name = "Camera Feed"
+
+                        if self.drone_manager:
+                            try:
+                                drones = self.drone_manager.list_drones()
+                                active = next((d for d in drones if d.status == "connected"), None) or (drones[0] if drones else None)
+                                if active:
+                                    drone_id = active.id
+                                    drone_name = active.name
+                                    t = active.telemetry
+                                    if t and (abs(t.latitude) > 0.0001 or abs(t.longitude) > 0.0001):
+                                        lat = t.latitude
+                                        lon = t.longitude
+                                        alt = t.altitude_relative or 0.0
+                                    elif abs(active.home_lat) > 0.0001 or abs(active.home_lon) > 0.0001:
+                                        lat = active.home_lat
+                                        lon = active.home_lon
+                            except Exception as ex:
+                                logger.error("Error reading drone telemetry for geotag: %s", ex)
+
+                        # If no drone coordinates are present, fallback to GCS default location
+                        if lat is None or lon is None:
+                            lat = 28.676644
+                            lon = 77.501816
+                            drone_name = "Tactical Feed (Default Home)"
+
+                        asyncio.create_task(
+                            self.geotag_manager.handle_detection(
+                                class_name=det["class_name"],
+                                confidence=det["confidence"],
+                                latitude=lat,
+                                longitude=lon,
+                                altitude=alt,
+                                drone_id=drone_id,
+                                drone_name=drone_name,
+                            )
+                        )
+
+                    # process_frame handles drawing directly on the frame and emits detections
+                    frame = self.ai.process_frame(frame, on_detection=_on_ai_detection)
 
                 # JPEG compression
                 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality]

@@ -143,3 +143,42 @@ class CommandLog(BaseModel):
     response_ms: Optional[int] = None
     error: Optional[str] = None
     ts: str = Field(default_factory=_now_iso)
+
+
+GeotagStatus = Literal["detected", "reviewed", "in_progress", "rescued", "dismissed"]
+
+
+class Geotag(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    drone_id: Optional[str] = None
+    drone_name: str = "Ground Station / Camera"
+    class_name: str = "person"
+    confidence: float = 0.0
+    latitude: float
+    longitude: float
+    altitude: float = 0.0
+    status: GeotagStatus = "detected"
+    notes: str = ""
+    sighting_count: int = 1
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class GeotagStatusUpdate(BaseModel):
+    status: GeotagStatus
+    notes: Optional[str] = None
+
+
+class GeotagCreate(BaseModel):
+    drone_id: Optional[str] = None
+    drone_name: str = "Manual Pin"
+    class_name: str = "person"
+    confidence: float = 1.0
+    latitude: float
+    longitude: float
+    altitude: float = 0.0
+    status: GeotagStatus = "detected"
+    notes: str = ""
+

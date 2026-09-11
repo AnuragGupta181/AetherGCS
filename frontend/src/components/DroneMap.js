@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from "react-leaflet";
-import { useGCS, useDroneList, useActiveDrone } from "@/store/gcsStore";
-import { Crosshair, Navigation as NavIcon, Layers, Lock, Unlock } from "lucide-react";
+import { useGCS, useDroneList, useActiveDrone, useGeotagList } from "@/store/gcsStore";
+import { Crosshair, Navigation as NavIcon, Layers, Lock, Unlock, MapPin, Filter } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
+import GeotagModal from "@/components/GeotagModal";
 
 const MAP_PROVIDERS = {
   satellite: {
@@ -84,6 +85,54 @@ const waypointIcon = (seq) =>
     html: `<div class="waypoint-marker">${seq + 1}</div>`,
   });
 
+// Geotag Tactical Pin Icon with status-based colors and radar pulse
+const geotagIcon = (tag) => {
+  const status = tag.status || "detected";
+  let color = "#EF4444"; // Red for detected
+  let pulseClass = "geotag-pulse-red";
+  let symbol = "!";
+
+  if (status === "reviewed") {
+    color = "#3B82F6";
+    pulseClass = "";
+    symbol = "✓";
+  } else if (status === "in_progress") {
+    color = "#F59E0B";
+    pulseClass = "geotag-pulse-amber";
+    symbol = "⚡";
+  } else if (status === "rescued") {
+    color = "#10B981";
+    pulseClass = "";
+    symbol = "★";
+  } else if (status === "dismissed") {
+    color = "#6B7280";
+    pulseClass = "";
+    symbol = "✕";
+  }
+
+  const label = (tag.class_name || "TARGET").slice(0, 7).toUpperCase();
+
+  return L.divIcon({
+    className: "geotag-custom-icon",
+    iconSize: [36, 44],
+    iconAnchor: [18, 44],
+    html: `
+      <div class="relative flex flex-col items-center cursor-pointer group select-none">
+        <div class="relative w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-black transition-transform group-hover:scale-110"
+             style="background-color: ${color}; color: #FFFFFF;">
+          ${pulseClass ? `<div class="absolute inset-0 rounded-full ${pulseClass}"></div>` : ''}
+          <span class="relative z-10 text-[11px] font-black">${symbol}</span>
+        </div>
+        <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[7px] -mt-[1px]"
+             style="border-t-color: ${color};"></div>
+        <div class="bg-black/90 border border-zinc-700 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold tracking-tight text-zinc-100 whitespace-nowrap shadow mt-0.5 pointer-events-none">
+          ${label}
+        </div>
+      </div>
+    `,
+  });
+};
+
 function MapClickHandler({ onClick }) {
   useMapEvents({ click(e) { onClick && onClick(e); } });
   return null;
@@ -161,6 +210,12 @@ export default function DroneMap() {
   const [providerKey, setProviderKey] = useState("satellite"); // Default to Satellite map like Mission Planner!
   const [autoPan, setAutoPan] = useState(true);
   const [showHud, setShowHud] = useState(true);
+
+  // Real-time AI Geotagging State
+  const geotags = useGeotagList();
+  const [selectedGeotag, setSelectedGeotag] = useState(null);
+  const [showGeotags, setShowGeotags] = useState(true);
+  const [hideDismissed, setHideDismissed] = useState(true);
 
   const provider = MAP_PROVIDERS[providerKey] || MAP_PROVIDERS.satellite;
 
@@ -386,6 +441,21 @@ export default function DroneMap() {
             <Marker position={[userLocation.lat, userLocation.lon]} icon={userIcon} interactive={false} />
           </>
         )}
+
+        {/* Real-time AI Geotagged Target Markers */}
+        {showGeotags &&
+          geotags
+            .filter((g) => (hideDismissed ? g.status !== "dismissed" : true))
+            .map((tag) => (
+              <Marker
+                key={`geotag-${tag.id}`}
+                position={[tag.latitude, tag.longitude]}
+                icon={geotagIcon(tag)}
+                eventHandlers={{
+                  click: () => setSelectedGeotag(tag),
+                }}
+              />
+            ))}
       </MapContainer>
 
       {/* Top Left Instructions Overlay (offset from zoom buttons) */}
@@ -408,6 +478,19 @@ export default function DroneMap() {
           <option value="dark">CartoDB Dark</option>
           <option value="osm">OpenStreetMap</option>
         </select>
+
+        <button
+          onClick={() => setShowGeotags(!showGeotags)}
+          title={showGeotags ? "Hide Geotagged Targets" : "Show Geotagged Targets"}
+          className={`h-7 px-2 flex items-center gap-1 text-[10px] font-mono border transition-colors ${
+            showGeotags
+              ? "bg-red-950/40 border-red-500/60 text-red-300 hover:bg-red-900/50"
+              : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          <MapPin className="w-3.5 h-3.5 text-red-400" />
+          <span>{geotags.filter((g) => g.status !== "dismissed").length}</span>
+        </button>
 
         <button
           onClick={fitAll}
@@ -470,6 +553,20 @@ export default function DroneMap() {
           </button>
         </div>
       </div>
+
+      {/* Geotag Inspection & Status Management Modal */}
+      <GeotagModal
+        open={Boolean(selectedGeotag)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setSelectedGeotag(null);
+        }}
+        geotag={selectedGeotag}
+        onCenterMap={(lat, lon) => {
+          if (mapRef.current) {
+            mapRef.current.flyTo([lat, lon], 18, { animate: true, duration: 1 });
+          }
+        }}
+      />
     </div>
   );
 }

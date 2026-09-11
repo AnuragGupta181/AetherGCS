@@ -34,6 +34,9 @@ export const useGCS = create((set, get) => ({
   draftMission: { ...DEFAULT_MISSION },
 
   missions: [],
+  geotags: {},
+  selectedGeotagId: null,
+  filterGeotagStatus: "all",
   levelCardOpen: true,
   toggleLevelCard: () => set((s) => ({ levelCardOpen: !s.levelCardOpen })),
 
@@ -45,12 +48,17 @@ export const useGCS = create((set, get) => ({
     setTimeout(() => window.dispatchEvent(new Event("resize")), 250);
   },
 
-  setSnapshot: (list) => {
+  setSnapshot: (droneList, geotagsList = null) => {
     const map = {};
-    list.forEach((d) => (map[d.id] = d));
-    const nextActive = get().activeDroneId || (list[0]?.id ?? null);
+    droneList.forEach((d) => (map[d.id] = d));
+    const nextActive = get().activeDroneId || (droneList[0]?.id ?? null);
     set((s) => {
-      const next = { ...s, drones: map, activeDroneId: nextActive };
+      let nextGeotags = s.geotags;
+      if (Array.isArray(geotagsList)) {
+        nextGeotags = {};
+        geotagsList.forEach((g) => (nextGeotags[g.id] = g));
+      }
+      const next = { ...s, drones: map, geotags: nextGeotags, activeDroneId: nextActive };
       return { ...next, ..._syncDraft(next) };
     });
   },
@@ -180,6 +188,27 @@ export const useGCS = create((set, get) => ({
 
   userLocation: null,
   setUserLocation: (loc) => set({ userLocation: loc }),
+
+  // Geotags Actions
+  setSelectedGeotagId: (id) => set({ selectedGeotagId: id }),
+  setFilterGeotagStatus: (status) => set({ filterGeotagStatus: status }),
+  setGeotags: (list) =>
+    set((s) => {
+      const map = {};
+      list.forEach((g) => (map[g.id] = g));
+      return { geotags: map };
+    }),
+  upsertGeotag: (tag) =>
+    set((s) => ({
+      geotags: { ...s.geotags, [tag.id]: tag },
+    })),
+  removeGeotag: (id) =>
+    set((s) => {
+      const { [id]: _, ...rest } = s.geotags;
+      const nextSelected = s.selectedGeotagId === id ? null : s.selectedGeotagId;
+      return { geotags: rest, selectedGeotagId: nextSelected };
+    }),
+  clearGeotags: () => set({ geotags: {}, selectedGeotagId: null }),
 }));
 
 // Selectors
@@ -189,3 +218,7 @@ export const useSelectedDrones = () =>
   useGCS(useShallow((s) => s.selectedDroneIds.map((id) => s.drones[id]).filter(Boolean)));
 export const useActiveDrone = () =>
   useGCS((s) => (s.activeDroneId ? s.drones[s.activeDroneId] : null));
+export const useGeotagList = () =>
+  useGCS(useShallow((s) => Object.values(s.geotags).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))));
+export const useSelectedGeotag = () =>
+  useGCS((s) => (s.selectedGeotagId ? s.geotags[s.selectedGeotagId] : null));

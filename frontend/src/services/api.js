@@ -41,3 +41,14 @@ export const visionApi = {
   getCameraAiStatus: () => client.get("/camera/ai/status").then((r) => r.data),
   toggleCameraAi: (state) => client.post(`/camera/ai/toggle${state !== undefined ? `?state=${state}` : ''}`).then((r) => r.data),
 };
+
+export const geotagsApi = {
+  list: () => client.get("/geotags").then((r) => r.data),
+  create: (payload) => client.post("/geotags", payload).then((r) => r.data),
+  get: (id) => client.get(`/geotags/${id}`).then((r) => r.data),
+  updateStatus: (id, status, notes = null) =>
+    client.patch(`/geotags/${id}/status`, { status, notes }).then((r) => r.data),
+  remove: (id) => client.delete(`/geotags/${id}`).then((r) => r.data),
+  clear: () => client.delete("/geotags").then((r) => r.data),
+};
+
